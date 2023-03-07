@@ -51,6 +51,31 @@ Project Organization
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
+Docker
+------------
+To run the `Jupyter Notebooks` locally, and persist changes made to the
+notebooks, first `git clone` the repo:
+```
+git clone {{ cookiecutter.repo_url }}/{{ cookiecutter.repo_name }}.git
+```
+Then `cd {{ cookiecutter.repo_name }}` and run the following:
+```
+docker run -d \
+           --rm \
+           --name {{ cookiecutter.container_name }} \
+           -e JUPYTER_ENABLE_LAB=yes \
+           -p 8888 \
+           -v $PWD:/home/jovyan \
+           ghcr.io/ragingtiger/omega-notebook:master && \
+sleep 5 && \
+  docker logs {{ cookiecutter.container_name }} 2>&1 | \
+    grep "http://127.0.0.1" | tail -n 1 | \
+    sed "s/:8888/:$(docker port {{ cookiecutter.container_name }} | \
+    grep '0.0.0.0:' | awk '{print $3'} | sed 's/0.0.0.0://g')/g"
+```
+Click the link (should look similar to:
+http://127.0.0.1:RANDOM_PORT/lab?token=LONG_ALPHANUMERIC_STRING) which will
+`automatically` log you in and allow you to start running the *notebooks*.
 
 --------
 
