@@ -1,144 +1,132 @@
-.PHONY: clean data lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: all convert execute resetnb delout clean jupyter
 
-#################################################################################
-# GLOBALS                                                                       #
-#################################################################################
+# Usage:
+# make         # execute and convert all Jupyter notebooks
+# make convert # only convert Jupyter notebooks
+# make execute # only execute Jupyter notebooks
+# make resetnb # only clear Jupyter notebook outputs
+# make delout  # only remove converted files
+# make clean   # combine resetnb and remove converted files
+# make jupyter # startup docker container running Jupyter server
 
-PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUCKET = {{ cookiecutter.s3_bucket }}
-PROFILE = {{ cookiecutter.aws_profile }}
-PROJECT_NAME = {{ cookiecutter.repo_name }}
-PYTHON_INTERPRETER = {{ cookiecutter.python_interpreter }}
+################################################################################
+# GLOBALS                                                                      #
+################################################################################
 
-ifeq (,$(shell which conda))
-HAS_CONDA=False
-else
-HAS_CONDA=True
+# make cli args
+OFRMT := html
+THEME := dark
+TMPLT := lab
+OUTDR := converted
+INTDR := notebooks
+DCTNR := $(notdir $(PWD))
+
+# extensions available
+OEXT_html     = html
+OEXT_latex    = tex
+OEXT_pdf      = pdf
+OEXT_webpdf   = pdf
+OEXT_markdown = md
+OEXT_rst      = rst
+OEXT_script   = py
+OEXT_notebook = ipynb
+OEXT = ${OEXT_${OFRMT}}
+
+# individual conversion flag variables
+OUTFL = --to ${OFRMT}
+THMFL = --theme ${THEME}
+TMPFL = --template ${TMPLT}
+ODRFL = --output-dir ${OUTDR}
+RMTGS = --TagRemovePreprocessor.enabled=True
+RMCEL = --TagRemovePreprocessor.remove_cell_tags remove_cell
+RMNPT = --TagRemovePreprocessor.remove_input_tags remove_input
+RMIPT = --TemplateExporter.exclude_input_prompt=True
+RMOPT = --TemplateExporter.exclude_output_prompt=True
+RMWSP = --RegexRemovePreprocessor.patterns '\s*\Z'
+
+# check for conditional vars
+ifdef NOTMPLT
+  undefine TMPFL
+endif
+ifdef NOTHEME
+  undefine THMFL
 endif
 
-#################################################################################
-# COMMANDS                                                                      #
-#################################################################################
+# combined conversion flag variables
+TMPFLGS = ${OUTFL} ${THMFL} ${TMPFL} ${ODRFL}
+RMVFLGS = ${RMTGS} ${RMCEL} ${RMNPT} ${RMIPT} ${RMOPT} ${RMWSP}
 
-## Install Python Dependencies
-requirements: test_environment
-	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
-	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
+# final conversion flag variable
+CNVRSNFLGS = ${TMPFLGS} ${RMVFLGS}
 
-## Make Dataset
-data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
+# notebook-related variables
+CURRENTDIR := $(PWD)
+NOTEBOOKS  := $(wildcard **/*.ipynb)
+CONVERTNB  := $(addprefix ${OUTDR}/, $(notdir $(NOTEBOOKS:%.ipynb=%.${OEXT})))
 
-## Delete all compiled Python files
-clean:
-	find . -type f -name "*.py[co]" -delete
-	find . -type d -name "__pycache__" -delete
+# docker-related variables
+DCKRIMG = ghcr.io/ragingtiger/omega-notebook:master
+DCKRRUN = docker run --rm -v ${CURRENTDIR}:/home/jovyan -it ${DCKRIMG}
 
-## Lint using flake8
-lint:
-	flake8 src
-
-## Upload Data to S3
-sync_data_to_s3:
-ifeq (default,$(PROFILE))
-	aws s3 sync data/ s3://$(BUCKET)/data/
-else
-	aws s3 sync data/ s3://$(BUCKET)/data/ --profile $(PROFILE)
+# check for conditional vars to turn off docker
+ifdef NODOCKER
+  undefine DCKRRUN
 endif
 
-## Download Data from S3
-sync_data_from_s3:
-ifeq (default,$(PROFILE))
-	aws s3 sync s3://$(BUCKET)/data/ data/
-else
-	aws s3 sync s3://$(BUCKET)/data/ data/ --profile $(PROFILE)
-endif
+# jupyter nbconvert vars
+NBEXEC = jupyter nbconvert --to notebook --execute --inplace
+NBCNVR = jupyter nbconvert ${CNVRSNFLGS}
+NBCLER = jupyter nbconvert --clear-output --inplace
 
-## Set up python interpreter environment
-create_environment:
-ifeq (True,$(HAS_CONDA))
-		@echo ">>> Detected conda, creating conda environment."
-ifeq (3,$(findstring 3,$(PYTHON_INTERPRETER)))
-	conda create --name $(PROJECT_NAME) python=3
-else
-	conda create --name $(PROJECT_NAME) python=2.7
-endif
-		@echo ">>> New conda env created. Activate with:\nsource activate $(PROJECT_NAME)"
-else
-	$(PYTHON_INTERPRETER) -m pip install -q virtualenv virtualenvwrapper
-	@echo ">>> Installing virtualenvwrapper if not already installed.\nMake sure the following lines are in shell startup file\n\
-	export WORKON_HOME=$$HOME/.virtualenvs\nexport PROJECT_HOME=$$HOME/Devel\nsource /usr/local/bin/virtualenvwrapper.sh\n"
-	@bash -c "source `which virtualenvwrapper.sh`;mkvirtualenv $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER)"
-	@echo ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
-endif
+################################################################################
+# COMMANDS                                                                     #
+################################################################################
 
-## Test python environment is setup correctly
-test_environment:
-	$(PYTHON_INTERPRETER) test_environment.py
+# default
+all: ${CONVERTNB}
 
-#################################################################################
-# PROJECT RULES                                                                 #
-#################################################################################
+# rule for executing single notebooks before converting
+%.ipynb:
+	@ echo "Executing ${INTDR}/$@ in place."
+	@ ${DCKRRUN} ${NBEXEC} ${INTDR}/$@
 
+# rule for converting single notebooks to HTML
+${OUTDR}/%.${OEXT}: %.ipynb
+	@ echo "Converting ${INTDR}/$< to ${OFRMT}"
+	@ ${DCKRRUN} ${NBCNVR} ${INTDR}/$<
 
+# convert all notebooks to HTML
+convert:
+	@ ${DCKRRUN} ${NBCNVR} ${NOTEBOOKS}
 
-#################################################################################
-# Self Documenting Commands                                                     #
-#################################################################################
+# execute all notebooks and store output inplace
+execute:
+	@ ${DCKRRUN} ${NBEXEC} ${NOTEBOOKS}
 
-.DEFAULT_GOAL := help
+# remove output from executed notebooks
+resetnb:
+	@ ${DCKRRUN} ${NBCLER} ${NOTEBOOKS}
 
-# Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
-# sed script explained:
-# /^##/:
-# 	* save line in hold space
-# 	* purge line
-# 	* Loop:
-# 		* append newline + line to hold space
-# 		* go to next line
-# 		* if line starts with doc comment, strip comment character off and loop
-# 	* remove target prerequisites
-# 	* append hold space (+ newline) to line
-# 	* replace newline plus comments by `---`
-# 	* print line
-# Separate expressions are necessary because labels cannot be delimited by
-# semicolon; see <http://stackoverflow.com/a/11799865/1968>
-.PHONY: help
-help:
-	@echo "$$(tput bold)Available rules:$$(tput sgr0)"
-	@echo
-	@sed -n -e "/^## / { \
-		h; \
-		s/.*//; \
-		:doc" \
-		-e "H; \
-		n; \
-		s/^## //; \
-		t doc" \
-		-e "s/:.*//; \
-		G; \
-		s/\\n## /---/; \
-		s/\\n/ /g; \
-		p; \
-	}" ${MAKEFILE_LIST} \
-	| LC_ALL='C' sort --ignore-case \
-	| awk -F '---' \
-		-v ncol=$$(tput cols) \
-		-v indent=19 \
-		-v col_on="$$(tput setaf 6)" \
-		-v col_off="$$(tput sgr0)" \
-	'{ \
-		printf "%s%*s%s ", col_on, -indent, $$1, col_off; \
-		n = split($$2, words, " "); \
-		line_length = ncol - indent; \
-		for (i = 1; i <= n; i++) { \
-			line_length -= length(words[i]) + 1; \
-			if (line_length <= 0) { \
-				line_length = ncol - indent - length(words[i]) - 1; \
-				printf "\n%*s ", -indent, " "; \
-			} \
-			printf "%s ", words[i]; \
-		} \
-		printf "\n"; \
-	}' \
-	| more $(shell test $(shell uname) = Darwin && echo '--no-init --raw-control-chars')
+# delete all converted files
+delout:
+	@ if [ -d "${CURRENTDIR}/${OUTDR}" ]; then \
+	  rm -rf "${CURRENTDIR}/${OUTDR}"; \
+	fi
+
+# cleanup everything
+clean: delout resetnb
+
+# launch jupyter notebook development Docker image
+jupyter:
+	docker run -d \
+	           --rm \
+	           --name ${DCTNR} \
+	           -e JUPYTER_ENABLE_LAB=yes \
+	           -p 8888 \
+	           -v ${CURRENTDIR}:/home/jovyan \
+	           ${DCKRIMG} && \
+	sleep 5 && \
+	  docker logs ${DCTNR} 2>&1 | \
+	    grep "http://127.0.0.1" | tail -n 1 | \
+	    sed "s/:8888/:$$(docker port ${DCTNR} | \
+	    grep '0.0.0.0:' | awk '{print $$3'} | sed 's/0.0.0.0://g')/g"
