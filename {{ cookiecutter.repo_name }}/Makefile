@@ -37,7 +37,7 @@ jupyter:
 	           --name ${JPTCTNR} \
 	           -e JUPYTER_ENABLE_LAB=yes \
 	           -p 8888 \
-	           -v ${CURRENTDIR}:/home/jovyan \
+	           -v "${CURRENTDIR}":/home/jovyan \
 	           ${DCKRIMG} && \
 	sleep 5 && \
 	  echo "Server address: $$(docker logs ${JPTCTNR} 2>&1 | \
