@@ -52,12 +52,12 @@ containers: jupyter
 
 # stop all containers
 stop-containers:
-	@ if [ -f ${CURRENTDIR}/.running_containers ]; then \
+	@ if [ -f "${CURRENTDIR}/.running_containers" ]; then \
 	  echo "Stopping Docker containers ..."; \
 	  while read container; do \
 	    echo "Container $$(docker stop $$container) stopped."; \
-	  done < ${CURRENTDIR}/.running_containers; \
-	  rm -f ${CURRENTDIR}/.running_containers; \
+	  done < "${CURRENTDIR}/.running_containers"; \
+	  rm -f "${CURRENTDIR}/.running_containers"; \
 	else \
 	  echo "${CURRENTDIR}/.running_containers file not found."; \
 	fi
