@@ -93,3 +93,6 @@ target/
 
 # container related
 .running_containers
+
+# shell files
+.bash_history
