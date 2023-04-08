@@ -96,3 +96,6 @@ target/
 
 # shell files
 .bash_history
+
+# Conda related
+.conda/
