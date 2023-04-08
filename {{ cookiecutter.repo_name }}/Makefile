@@ -35,6 +35,7 @@ jupyter:
 	@ docker run -d \
 	           --rm \
 	           --name ${JPTCTNR} \
+	           -e PYTHONPATH=/home/jovyan/src \
 	           -e JUPYTER_ENABLE_LAB=yes \
 	           -p 8888 \
 	           -v "${CURRENTDIR}":/home/jovyan \
