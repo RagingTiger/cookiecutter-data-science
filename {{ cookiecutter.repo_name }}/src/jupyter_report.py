@@ -93,6 +93,7 @@ def get_pdf(nb_path: str,
 
 def auto_convert(nb_globals: dict,
                  auto: bool = True,
+                 force: bool = False,
                  nb_path: Optional[str] = None,
                  converter: Callable[..., None] = get_pdf,
                  **kwargs: Any) -> None:
@@ -103,13 +104,13 @@ def auto_convert(nb_globals: dict,
         nb_path = ipynbname.path()
 
     # check to see if hash in globals
-    if 'NB_HASH' in nb_globals and auto:
+    if 'NB_HASH' in nb_globals and (auto or force) :
         # get current hash
         assert nb_path is not None
         fresh_nb_hash = hash_notebook(nb_path)
 
         # compare to old
-        if fresh_nb_hash != nb_globals['NB_HASH']:
+        if fresh_nb_hash != nb_globals['NB_HASH'] or force:
             # notify user of notebook being converted
             print(f'Notebook path to be converted: {nb_path}')
 
