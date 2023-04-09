@@ -97,30 +97,28 @@ def auto_convert(nb_globals: dict,
                  converter: Callable[..., None] = get_pdf,
                  **kwargs: Any) -> None:
     '''Keep track of notebook updates and convert on change.'''
-    # incase you want to turn it off
-    if auto:
-        # check if default notebook path
-        if not nb_path:
-            # set nb_path using ipynbname
-            nb_path = ipynbname.path()
+    # check if default notebook path
+    if not nb_path:
+        # set nb_path using ipynbname
+        nb_path = ipynbname.path()
 
-        # check to see if hash in globals
-        if 'NB_HASH' in nb_globals:
-            # get current hash
-            assert nb_path is not None
-            fresh_nb_hash = hash_notebook(nb_path)
-
-            # compare to old
-            if fresh_nb_hash != nb_globals['NB_HASH']:
-                # notify user of notebook being converted
-                print(f'Notebook path to be converted: {nb_path}')
-
-                # time to convert
-                converter(nb_path, **kwargs)
-
-        # calculate hash
+    # check to see if hash in globals
+    if 'NB_HASH' in nb_globals and auto:
+        # get current hash
         assert nb_path is not None
-        nb_hash = hash_notebook(nb_path)
+        fresh_nb_hash = hash_notebook(nb_path)
 
-        # update globals
-        nb_globals['NB_HASH'] = nb_hash
+        # compare to old
+        if fresh_nb_hash != nb_globals['NB_HASH']:
+            # notify user of notebook being converted
+            print(f'Notebook path to be converted: {nb_path}')
+
+            # time to convert
+            converter(nb_path, **kwargs)
+
+    # calculate hash
+    assert nb_path is not None
+    nb_hash = hash_notebook(nb_path)
+
+    # update globals
+    nb_globals['NB_HASH'] = nb_hash
