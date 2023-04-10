@@ -1,15 +1,23 @@
 import datetime
 import hashlib
 import ipynbname
+from IPython.display import clear_output
+from IPython import get_ipython
 import os
 import pathlib
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 from nbconvert.exporters import PDFExporter
 import traitlets.config
 
 
 HOME_BASE = '/home/jovyan'
 BUFF_SIZE = 65536
+
+
+def check_ipython(err_msg: str = 'Not running in a Jupyter notebook.') -> None:
+    '''Simply test wether code is in an ipython shell.'''
+    # if not in ipython shell alert user
+    assert get_ipython() is not None, err_msg
 
 
 def hash_notebook(nb_path: str) -> str:
@@ -80,8 +88,11 @@ def get_pdf(nb_path: str,
     # get date time for doc
     dt_stamp = datetime.datetime.now().strftime('%y%m%d%H%M%S')
 
+    # extract file name from file path
+    nb_name = os.path.basename(nb_path)
+
     # create report name for PDF
-    pdf_name = f'{ipynbname.name()}.{dt_stamp}.pdf'
+    pdf_name = f'{nb_name}.{dt_stamp}.pdf'
 
     # create full path for PDF report
     pdf_full_path = os.path.join(output_dir, pdf_name)
@@ -94,19 +105,18 @@ def get_pdf(nb_path: str,
 def auto_convert(nb_globals: dict,
                  auto: bool = True,
                  force: bool = False,
-                 nb_path: Optional[str] = None,
                  converter: Callable[..., None] = get_pdf,
                  **kwargs: Any) -> None:
     '''Keep track of notebook updates and convert on change.'''
-    # check if default notebook path
-    if not nb_path:
-        # set nb_path using ipynbname
-        nb_path = ipynbname.path()
+    # see if in jupyter nb
+    check_ipython('Designed to be executed in Jupyter notebook only. Please use manual conversion methods.')
+
+    # set nb_path using ipynbname
+    nb_path = ipynbname.path().as_posix()
 
     # check to see if hash in globals
-    if 'NB_HASH' in nb_globals and (auto or force) :
+    if 'NB_HASH' in nb_globals and (auto or force):
         # get current hash
-        assert nb_path is not None
         fresh_nb_hash = hash_notebook(nb_path)
 
         # compare to old
@@ -117,8 +127,11 @@ def auto_convert(nb_globals: dict,
             # time to convert
             converter(nb_path, **kwargs)
 
+            # then clear
+            if not kwargs['debug']:
+                clear_output()
+
     # calculate hash
-    assert nb_path is not None
     nb_hash = hash_notebook(nb_path)
 
     # update globals
