@@ -128,7 +128,7 @@ def auto_convert(nb_globals: dict,
             converter(nb_path, **kwargs)
 
             # then clear
-            if not kwargs['debug']:
+            if not kwargs.get('debug', False):
                 clear_output()
 
     # calculate hash
