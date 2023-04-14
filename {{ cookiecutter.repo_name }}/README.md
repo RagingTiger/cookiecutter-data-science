@@ -47,7 +47,7 @@
     │       └── visualize.py
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-    
+
 ## Make
 Here we will document the different `make` commands defined in the `Makefile`.
 All *commands* (excluding the `all` command which is simply executed by
@@ -58,6 +58,8 @@ command, simply run `make -n [COMMAND]`.
 ### Commands
 + `all`: (*aka*: `make`) alias for `jupyter` command
 + `jupyter`: launches the Jupyter notebook development Docker image
++ `pause`: pause PSECS (to pause between commands)
++ `address`: get Docker container address/port
 + `containers`: launch all Docker containers
 + `stop-containers`: simply stops all running Docker containers
 + `restart-containers`: restart all containers
