@@ -1,7 +1,7 @@
 .PHONY: all jupyter pause address containers stop-containers restart-containers
 
 # Usage:
-# make                    # just alias to jupyter command
+# make                    # just alias to containers command
 # make jupyter            # startup Docker container running Jupyter server
 # make pause              # pause PSECS (to pause between commands)
 # make address            # get Docker container address/port
@@ -30,7 +30,7 @@ DCKRRUN = docker run --rm -v ${CURRENTDIR}:/home/jovyan -it ${DCKRIMG}
 ################################################################################
 
 # launch jupyter
-all: jupyter
+all: containers
 
 # launch jupyter notebook development Docker image
 jupyter:
