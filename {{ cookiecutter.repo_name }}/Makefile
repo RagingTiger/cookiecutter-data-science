@@ -35,15 +35,21 @@ all: containers
 # launch jupyter notebook development Docker image
 jupyter:
 	@ echo "Launching Jupyter in Docker container -> ${JPTCTNR} ..."
-	@ docker run -d \
-	           --rm \
-	           --name ${JPTCTNR} \
-	           -e PYTHONPATH=/home/jovyan/src \
-	           -e JUPYTER_ENABLE_LAB=yes \
-	           -p 8888 \
-	           -v "${CURRENTDIR}":/home/jovyan \
-	           ${DCKRIMG} && \
-	echo "${JPTCTNR}" >> .running_containers
+	@ if ! docker ps --format={{.Names}} | grep -q "${JPTCTNR}"; then \
+	  docker run -d \
+	             --rm \
+	             --name ${JPTCTNR} \
+	             -e PYTHONPATH=/home/jovyan/src \
+	             -e JUPYTER_ENABLE_LAB=yes \
+	             -p 8888 \
+	             -v "${CURRENTDIR}":/home/jovyan \
+	             ${DCKRIMG} && \
+	  if ! grep -sq "${JPTCTNR}" "${CURRENTDIR}/.running_containers"; then \
+	    echo "${JPTCTNR}" >> .running_containers; \
+	  fi \
+	else \
+	  echo "Container already running. Try setting DCTNR manually."; \
+	fi
 
 # simply wait for a certain amount of time
 pause:
