@@ -1,4 +1,5 @@
-.PHONY: all jupyter pause address containers stop-containers restart-containers
+.PHONY: all jupyter pause address containers list-containers stop-containers \
+        restart-containers
 
 # Usage:
 # make                    # just alias to containers command
@@ -6,6 +7,7 @@
 # make pause              # pause PSECS (to pause between commands)
 # make address            # get Docker container address/port
 # make containers         # launch all Docker containers
+# make list-containers    # list all running containers
 # make stop-containers    # simply stops all running Docker containers
 # make restart-containers # restart all containers
 
@@ -67,9 +69,8 @@ address:
 	          grep '0.0.0.0:' | awk '{print $$3}' | sed 's/0.0.0.0://g')/g | \
 	          tr -d '[:blank:]')"; \
 	  else \
-	    echo "Could not find running container: $${container}." \
-	         "Try running: make address" \
-	         "DCTNR=$$(echo $${container} | sed 's/jupyter\.//g')"; \
+	    echo "Could not find running container: ${JPTCTNR}." \
+	         "Try running: make list-containers"; \
 	  fi \
 	done < "${CURRENTDIR}/.running_containers"; \
 	else \
@@ -78,6 +79,17 @@ address:
 
 # launch all docker containers
 containers: jupyter pause address
+
+# list all running containers
+list-containers:
+	@ if [ -f "${CURRENTDIR}/.running_containers" ]; then \
+	echo "Currently running containers:"; \
+	while read container; do \
+	  echo "-->  $${container}"; \
+	done < "${CURRENTDIR}/.running_containers"; \
+	else \
+	  echo ".running_containers file not found. Is a Docker container running?"; \
+	fi
 
 # stop all containers
 stop-containers:
