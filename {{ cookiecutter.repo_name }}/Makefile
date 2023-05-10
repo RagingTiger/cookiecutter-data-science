@@ -1,5 +1,5 @@
 .PHONY: all jupyter pause address containers list-containers stop-containers \
-        restart-containers
+        restart-containers clear-nb clean
 
 # Usage:
 # make                    # just alias to containers command
@@ -10,6 +10,8 @@
 # make list-containers    # list all running containers
 # make stop-containers    # simply stops all running Docker containers
 # make restart-containers # restart all containers
+# make clear-nb           # simply clears Jupyter notebook output
+# make clean              # combines all clearing commands into one
 
 ################################################################################
 # GLOBALS                                                                      #
@@ -17,15 +19,20 @@
 
 # make cli args
 DCTNR := $(notdir $(PWD))
+INTDR := notebooks
 PSECS := 5
 
 # notebook-related variables
 CURRENTDIR := $(PWD)
+NOTEBOOKS  := $(shell find ${INTDR} -name "*.ipynb" -not -path "*/.ipynb_*/*")
 
 # docker-related variables
 JPTCTNR = jupyter.${DCTNR}
 DCKRIMG = ghcr.io/ragingtiger/omega-notebook:master
 DCKRRUN = docker run --rm -v ${CURRENTDIR}:/home/jovyan -it ${DCKRIMG}
+
+# jupyter nbconvert vars
+NBCLER = jupyter nbconvert --clear-output --inplace
 
 ################################################################################
 # COMMANDS                                                                     #
@@ -105,3 +112,11 @@ stop-containers:
 
 # restart all containers
 restart-containers: stop-containers containers
+
+# remove output from executed notebooks
+clear-nb:
+	@ echo "Removing all output from Jupyter notebooks."
+	@ ${DCKRRUN} ${NBCLER} ${NOTEBOOKS}
+
+# cleanup everything
+clean: clear-nb

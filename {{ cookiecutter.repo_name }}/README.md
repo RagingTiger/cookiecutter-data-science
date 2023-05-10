@@ -64,6 +64,8 @@ command, simply run `make -n [COMMAND]`.
 + `list-containers`: list all running containers
 + `stop-containers`: simply stops all running Docker containers
 + `restart-containers`: restart all containers
++ `clear-nb`: simply clears Jupyter notebook output
++ `clean`: combines all clearing commands into one
 
 ## Docker
 This is the same Docker command that is defined in the `Makefile` as the
