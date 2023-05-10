@@ -61,6 +61,7 @@ command, simply run `make -n [COMMAND]`.
 + `pause`: pause PSECS (to pause between commands)
 + `address`: get Docker container address/port
 + `containers`: launch all Docker containers
++ `list-containers`: list all running containers
 + `stop-containers`: simply stops all running Docker containers
 + `restart-containers`: restart all containers
 
