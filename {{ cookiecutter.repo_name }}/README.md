@@ -68,7 +68,7 @@ command, simply run `make -n [COMMAND]`.
 This is the same Docker command that is defined in the `Makefile` as the
 `jupyter` command. To run it outside of `make`, first `git clone` the repo:
 ```
-git clone {{ cookiecutter.repo_url }}/{{ cookiecutter.repo_name }}.git
+git clone {{ cookiecutter.repo_url }}
 ```
 Then `cd {{ cookiecutter.repo_name }}` and run the following:
 ```
