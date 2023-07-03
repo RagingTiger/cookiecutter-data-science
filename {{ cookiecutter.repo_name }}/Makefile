@@ -28,7 +28,7 @@ NOTEBOOKS  := $(shell find ${INTDR} -name "*.ipynb" -not -path "*/.ipynb_*/*")
 
 # docker-related variables
 JPTCTNR = jupyter.${DCTNR}
-DCKRIMG = ghcr.io/ragingtiger/omega-notebook:master
+DCKRIMG = {{ cookiecutter.docker_image }}
 DCKRRUN = docker run --rm -v ${CURRENTDIR}:/home/jovyan -it ${DCKRIMG}
 
 # jupyter nbconvert vars
@@ -44,7 +44,7 @@ all: containers
 # launch jupyter notebook development Docker image
 jupyter:
 	@ echo "Launching Jupyter in Docker container -> ${JPTCTNR} ..."
-	@ if ! docker ps --format={{.Names}} | grep -q "${JPTCTNR}"; then \
+	@ if ! docker ps --format={{ "{{.Names}}" }} | grep -q "${JPTCTNR}"; then \
 	  docker run -d \
 	             --rm \
 	             --name ${JPTCTNR} \

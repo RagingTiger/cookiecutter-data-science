@@ -81,7 +81,7 @@ docker run -d \
            -e JUPYTER_ENABLE_LAB=yes \
            -p 8888 \
            -v $PWD:/home/jovyan \
-           ghcr.io/ragingtiger/omega-notebook:master && \
+           {{ cookiecutter.docker_image }} && \
 sleep 5 && \
   docker logs {{ cookiecutter.container_name }} 2>&1 | \
     grep "http://127.0.0.1" | tail -n 1 | \
