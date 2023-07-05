@@ -78,6 +78,7 @@ Then `cd {{ cookiecutter.repo_name }}` and run the following:
 docker run -d \
            --rm \
            --name {{ cookiecutter.container_name }} \
+           -e PYTHONPATH=/home/jovyan/src \
            -e JUPYTER_ENABLE_LAB=yes \
            -p 8888 \
            -v $PWD:/home/jovyan \
