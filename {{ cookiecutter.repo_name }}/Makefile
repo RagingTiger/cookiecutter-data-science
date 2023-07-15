@@ -52,6 +52,7 @@ jupyter:
 	             -e JUPYTER_ENABLE_LAB=yes \
 	             -p 8888 \
 	             -v "${CURRENTDIR}":/home/jovyan \
+	             ${DCKROPT} \
 	             ${DCKRIMG} && \
 	  if ! grep -sq "${JPTCTNR}" "${CURRENTDIR}/.running_containers"; then \
 	    echo "${JPTCTNR}" >> .running_containers; \
